@@ -1,7 +1,5 @@
-venv/
-.venv/
-__pycache__/
-*.pyc
+bin/
+*.exe
+*.test
+*.out
 .env
-.coverage
-.pytest_cache/

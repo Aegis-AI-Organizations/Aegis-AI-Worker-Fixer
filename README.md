@@ -1,4 +1,4 @@
-# 🚑 Aegis AI - Worker Pool: Fixer/Deployer
+# 🚑 Aegis AI - Worker Pool: Fixer
 
 **Project ID:** AEGIS-CORE-2026
 
@@ -6,7 +6,7 @@
 The **Aegis AI Worker Fixer** handles the remediation logic phase in our distributed execution topology. Managed downstream by the Brain Orchestrator (Temporal), these Go-based workers receive vulnerability inputs and push mitigation patches natively into client infrastructure states.
 
 * **Tech Stack:** Go (Native Goroutines, `client-go`, `controller-runtime`).
-* **Role:** 
+* **Role:**
   * Reconciles configuration drift generated during attacks.
   * Rapidly generates and applies PR diffs to remediated git repositories or K8s resources.
 * **Architecture Justification:** Go dominates infrastructure automation. Its speed and native Kube SDK integration are vital to ensuring minimal RTO after zero-day patches.
