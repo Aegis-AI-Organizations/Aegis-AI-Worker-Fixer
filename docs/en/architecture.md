@@ -1,3 +1,3 @@
-# Architecture | Aegis-AI-Worker-Fixer
+# Aegis AI Fixer Worker
 
-Document initialisé pour les tests de récupération Docusaurus par le plugin remote-content.
+The AI remediation engine. This component leverages advanced LLMs to ingest vulnerability signatures (Evidences) discovered by the pentest worker and generates automated patch recommendations directly committed to repository clones.
