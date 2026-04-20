@@ -1,32 +1,75 @@
-# 🚑 Aegis AI - Worker Pool: Fixer
+# 🚑 Aegis AI — Fixer Worker
 
 **Project ID:** AEGIS-CORE-2026
 
-## 🏗️ System Architecture & Role
-The **Aegis AI Worker Fixer** handles the remediation logic phase in our distributed execution topology. Managed downstream by the Brain Orchestrator (Temporal), these Go-based workers receive vulnerability inputs and push mitigation patches natively into client infrastructure states.
+> The **Aegis AI Fixer Worker** is the automated remediation engine of the platform. Orchestrated by the Brain via **Temporal**, these Go-based workers receive vulnerability insights and automatically generate/apply mitigation patches (Git PRs, K8s manifests, or Terraform diffs) to secure the target infrastructure.
 
-* **Tech Stack:** Go (Native Goroutines, `client-go`, `controller-runtime`).
-* **Role:**
-  * Reconciles configuration drift generated during attacks.
-  * Rapidly generates and applies PR diffs to remediated git repositories or K8s resources.
-* **Architecture Justification:** Go dominates infrastructure automation. Its speed and native Kube SDK integration are vital to ensuring minimal RTO after zero-day patches.
+---
 
-## 🔐 Security & DevSecOps Mandates
-* **No Plain-Text Secrets:** Like all Aegis resources, any git tokens or deploy keys must be passed to this stateless worker at execution time via Infisical.
-* **Least Privilege:** This pool is constrained, executing strictly under isolated RBAC roles.
+## 🏗️ Role in the Ecosystem
 
-## 🐳 Docker Deployment
-Designed to scale dynamically (Autoscaling Infinite Pool) against Temporal queues within the Kubernetes compute layer.
+The Fixer pool closes the security loop by moving from "Detection" to "Resolution".
+
+- **Vulnerability Reconciliation**: Analyzes identified weaknesses and maps them to known secure configurations.
+- **GitOps Automation**: Automatically creates Pull Requests with optimized security patches in the client's repositories.
+- **Infrastructure Patching**: Directly applies non-breaking security hotfixes to Kubernetes resources when authorized.
+
+```mermaid
+graph LR
+    Brain[Brain Orchestrator] -- "Fix Instructions" --> Fixer[Fixer Worker (Go)]
+    Fixer -- "Generate PR" --> Git[Client Git Repo]
+    Fixer -- "Apply Manifest" --> K8s[Client K8s Cluster]
+    Git -- "Webhook" --> ArgoCD[ArgoCD Sync]
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Component | Technology | Version |
+|---|---|---|
+| Language | **Go** | 1.22+ |
+| Orchestration | **Temporal SDK** | 1.x |
+| K8s Integration | **client-go**, controller-runtime | — |
+| Git Integration | **go-git** | — |
+
+---
+
+## 🔐 Security & DevSecOps
+
+- **Least Privilege RBAC**: Operates with strictly scoped Kubernetes roles, only allowed to modify specific resources.
+- **Secret Management**: Deployment keys and Git tokens are injected via **Infisical** at runtime.
+- **Audit Logging**: Every remediation action is logged with a complete cryptographic audit trail.
+
+---
+
+## 🐳 Deployment (Kubernetes)
+
+Autoscaled by **KEDA** based on the remediation task queue depth.
+
+```yaml
+# Helm values example
+image:
+  repository: ghcr.io/aegis-ai/aegis-worker-fixer
+  tag: latest
+keda:
+  enabled: true
+  minReplicas: 0
+  maxReplicas: 20
+```
+
+---
+
+## 🛠️ Development
 
 ```bash
-docker pull ghcr.io/aegis-ai/aegis-worker-fixer:latest
+# Run locally
+go run main.go
 
-infisical run --env=prod -- docker run -d \
-  --name aegis-worker-fixer \
-  --read-only \
-  --cap-drop=ALL \
-  --security-opt no-new-privileges:true \
-  --user 10001:10001 \
-  -e INFISICAL_TOKEN=$INFISICAL_TOKEN \
-  ghcr.io/aegis-ai/aegis-worker-fixer:latest
+# Run unit tests
+go test ./...
 ```
+
+---
+
+*Aegis AI — Remediation & Automation — 2026*
