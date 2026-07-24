@@ -43,6 +43,56 @@ graph LR
 
 ---
 
+## Remediation Activity
+
+The worker exposes `RemediationActivity.RemediateVulnerability` as the Temporal activity entrypoint. The activity:
+
+- parses the vulnerability report,
+- clones the target repository,
+- creates branch `aegis-fix-[vuln-id]`,
+- applies a supported SQL Injection remediation,
+- runs a mini-scan on the patched branch through the `Scanner` interface,
+- opens a GitHub Pull Request or GitLab Merge Request only if the mini-scan no longer detects the vulnerability.
+
+Minimal request shape:
+
+```json
+{
+  "repository": {
+    "provider": "github",
+    "owner": "acme",
+    "name": "vulnerable-app",
+    "clone_url": "https://github.com/acme/vulnerable-app.git",
+    "base_branch": "main"
+  },
+  "vulnerability": {
+    "id": "SQLI-123",
+    "type": "SQL Injection",
+    "title": "SQL injection in login handler",
+    "file_path": "handler.go"
+  }
+}
+```
+
+Configure one provider token at runtime:
+
+```bash
+export GITHUB_TOKEN=ghp_xxx
+# or
+export GITLAB_TOKEN=glpat_xxx
+```
+
+Optional endpoints for self-hosted providers:
+
+```bash
+export GITHUB_API_URL=https://github.example/api/v3
+export GITLAB_API_URL=https://gitlab.example
+```
+
+If the mini-scan still reports the original vulnerability, the activity returns `failed_validation` and does not create a pull request.
+
+---
+
 ## 🐳 Deployment (Kubernetes)
 
 Autoscaled by **KEDA** based on the remediation task queue depth.
@@ -64,7 +114,7 @@ keda:
 
 ```bash
 # Run locally
-go run main.go
+go run ./cmd/fixer
 
 # Run unit tests
 go test ./...
